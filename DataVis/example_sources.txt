@@ -1,0 +1,4 @@
+# (1) source name (2) central coords RA/Dec (3) cutout size (arcsec)
+Crab	05h34m32s+22d0m52s	1000
+SN1006	15h03m08s-41d57m00s	2500
+PKS2014-55	20h18m01s-55d39m34s	1500

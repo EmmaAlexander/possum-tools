@@ -1,0 +1,8 @@
+#(1) Survey	(2) Pixel size (arcsec)
+WISE_3.4	1.375	
+DSS	1.7
+SUMSS_843_MHz	11
+2MASS-J	1
+NVSS	15
+GLEAM_170-231_MHz	28
+PSPC_2.0_Deg-Int	15
