@@ -1,4 +1,4 @@
-#trying to tie all my bloody subimage scripts together
+#CASA script to create cutouts of fits cubes
 
 directory = '/Volumes/TARDIS/Work/askap/'
 altdirectory = '/Volumes/NARNIA/'
