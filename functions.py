@@ -6,11 +6,14 @@ from astropy.io import fits
 import math as m
 import sys
 from scipy.optimize import curve_fit
+import astropy.units as u
+import astropy.coordinates as coord
+from astropy.wcs import WCS
 
 
 def fit(x,y,yerr):
     #fit a straight line 
-    w=np.divide(1,yerr*yerr)
+    w=np.divide(1,yerr)
     df= len(x)-2 #degrees of freedom
     #filter out NaNs by indexing
     idx = np.isfinite(x) & np.isfinite(y) & np.isfinite(w)
@@ -106,6 +109,46 @@ def quadfit(x,y,xloc):
         print("Something went wrong with a fit")
         p=[np.nan,np.nan,np.nan]
     return p
+
+def burnkfit(lamdasq,polfrac_cube,polfrac_cube_errs,mask):
+    h_dims=int(polfrac_cube.shape[2])
+    v_dims=int(polfrac_cube.shape[1])
+
+    k_arr=np.nan*np.ones(shape=mask.shape)
+    p0_arr=np.nan*np.ones(shape=mask.shape)
+    redchi_array=np.nan*np.ones(shape=mask.shape)
+
+    x=np.square(lamdasq)
+
+    for i in range(0,h_dims):
+        for j in range(0,v_dims):
+            #check that it's not a masked pixel
+            if mask[j,i]==0:
+                try:
+                    polfrac_slice=polfrac_cube[:,j,i]
+                    polfrac_errs_slice=polfrac_cube_errs[:,j,i]
+
+                    polfrac_errs_slice=np.where(polfrac_slice<0,np.nan,polfrac_errs_slice)
+                    polfrac_slice=np.where(polfrac_slice<0,np.nan,polfrac_slice)
+
+                    y=np.log(polfrac_slice)
+                    #through standard error propagation
+                    yerr=np.divide(polfrac_errs_slice,polfrac_slice)
+
+                    #fit a straight line 
+                    p,pError,redchisqrd = fit(x,y,yerr)
+                    k=-1*p[1]
+                    p0=np.exp(p[0])
+                
+                    k_arr[j,i]=k
+                    p0_arr[j,i]=p0
+                    redchi_array[j,i]=redchisqrd
+                except:
+                    print("uh oh")
+    
+    return k_arr,p0_arr,redchi_array
+
+
 
 def image_rms(a,rms_crop_pix):
     '''Take the rms around the edge of the image then use it to do a second pass'''
@@ -208,6 +251,20 @@ def get_rm_scale(rmarray,percent):
     print(rm_scale_val)
     return rm_scale_val
 
+def galactic_rm(coords,filename,errfilename):
 
+    faradaysky,header=fitsopen(filename)
+    faradayuncertainty,header2=fitsopen(errfilename)
+    wcs=WCS(header)
+
+    pixcoords=wcs.world_to_pixel(coords)
+
+    x=int(round(float(pixcoords[0])))
+    y=int(round(float(pixcoords[1])))
+
+    RM=faradaysky[y,x]
+    RMerr=faradayuncertainty[y,x]
+
+    return(RM,RMerr)
 
 
