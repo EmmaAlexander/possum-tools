@@ -103,18 +103,6 @@ def main(args):
 	plt.plot([d,d+post_d],[amp*np.sin(angle_r),amp*np.sin(angle_r)],[amp*np.cos(angle_r),amp*np.cos(angle_r)],color='grey')
 	plt.plot([d,d+post_d],[-1*amp*np.sin(angle_r),-1*amp*np.sin(angle_r)],[-1*amp*np.cos(angle_r),-1*amp*np.cos(angle_r)],color='k')
 
-	#mlab.plot3d(x, y, z, t, tube_radius=0.025, colormap='Spectral')
-	#ax.plot(z, y, x, label='parametric curve')
-	#make axes
-	#plt.plot([0,d],[0,0],[0,0],color='k')
-	#plt.plot([0,0],[-amp,amp],[0,0],color='k')
-	#plt.plot([0,0],[0,0],[-amp,amp],color='k')
-	#plt.plot([d,d],[-amp,amp],[0,0],color='k')
-	#plt.plot([d,d],[0,0],[-amp,amp],color='k')
-
-	#plt.plot([d,d],[0,amp*np.sin(angle_r)],[0,amp*np.cos(angle_r)],color='r')
-	#plt.plot([0,0],[0,0],[0,amp],color='r')
-
 	#ax.grid(False)
 	if g==False:
 		#remove grid
@@ -170,4 +158,3 @@ if __name__ == "__main__":
 	args = ap.parse_args()
 
 	main(args)
-
