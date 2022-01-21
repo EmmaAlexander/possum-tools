@@ -78,23 +78,22 @@ def gaussfit(x,y):
     peak=np.nanmax(y)
     peakloc=np.where(y==peak)[0]
 
-    sigma=50. #just for a placeholder width
+    sigma=10. #just for a placeholder width
 
-    if len(peakloc)>=2 or peakloc==0:
+    if len(peakloc)>2 or len(peakloc)==0:
         #something is wrong
         fitted_peak=np.nan
         fitted_peak_loc=np.nan   
-    else: 
-    
-        if len(peakloc)==2:
-            #two adjacent points with same value, take the first
-            peakloc=peakloc[0]
+    elif len(peakloc)==2:
+        #two adjacent points with same value, take the first
+        peakloc=peakloc[0]
+        print(peakloc)
 
-        mean=float(x[peakloc])
+    mean=float(x[peakloc])
 
-        #do a guassian fit python
-        popt, pcov = curve_fit(gauss, np.array(x,dtype='float64'), np.array(y,dtype='float64'), p0=[np.nanmin(y), np.nanmax(y), mean, sigma])
-        return popt
+    #do a guassian fit python
+    popt, pcov = curve_fit(gauss, np.array(x,dtype='float64'), np.array(y,dtype='float64'), p0=[np.nanmin(y), np.nanmax(y), mean, sigma])
+    return popt
 
 
 
