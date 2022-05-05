@@ -1,21 +1,24 @@
 #CASA script to create cutouts of fits cubes
 
-directory = '/Volumes/TARDIS/Work/askap/'
-altdirectory = '/Volumes/NARNIA/'
+directoryA = '/Volumes/TARDIS/Work/askap/'
+directoryB = '/Volumes/NARNIA/pilot_cutouts/'
 
 import numpy as np
-sources=np.loadtxt('subimage_sources.txt',dtype='str')
+sources=np.loadtxt('/Users/emma/GitHub/possum-tools/DataProcess/pilot_sources.txt',dtype='str')
 
 for i in range(0,sources.shape[0]):
 	objectname=sources[i,0]
-	POSSUMSB=sources[i,1]
-	EMUSB=sources[i,2]
-	sourcecentre=sources[i,3]
+	POSSUMSB=sources[i,3]
+	EMUSB=sources[i,4]
+	ra=sources[i,1]
+	dec=sources[i,2]
+	sourcecentre=ra+','+dec
+	fov=sources[i,6]#arcsec
 	print(objectname)
 
-	region='centerbox[['+sourcecentre+'], [10arcmin, 10arcmin]]'
-	possum_outfile=directory+objectname+'/'+objectname+'_POSSUM.fits'
-	emu_outfile=directory+objectname+'/'+objectname+'_EMU.fits'
+	region='centerbox[['+sourcecentre+'], ['+fov+'arcsec, '+fov+'arcsec]]'
+	possum_outfile=directoryB+objectname+'/'+objectname+'_POSSUM.fits'
+	emu_outfile=directoryB+objectname+'/'+objectname+'_EMU.fits'
 
 	#POSSUM
 	if POSSUMSB == '5038':
@@ -23,7 +26,7 @@ for i in range(0,sources.shape[0]):
 		possum_cont_filename = '/Volumes/NARNIA/PawseySync/DRAGN_1_0p8_A/DRAGN_1_0p8_A/image.i.SB5038.cont.restored.fits'
 
 	else:
-		possum_cont_filename = directory +'fullfields/image.i.SB'+POSSUMSB+'.cont.taylor.0.restored.fits'
+		possum_cont_filename = directoryA +'fullfields/image.i.SB'+POSSUMSB+'.cont.taylor.0.restored.fits'
 
 	if POSSUMSB == '10035':
 		print('Skipping POSSUM: bad SB10035')
@@ -32,9 +35,9 @@ for i in range(0,sources.shape[0]):
 		exportfits(imagename='possum_cont_temp',fitsimage=possum_outfile,overwrite=True)
 
 		#cubes 
-		i_filename = directory + 'fullfields/image.restored.i.SB'+POSSUMSB+'.contcube.total.fits'
-		q_filename = directory + 'fullfields/image.restored.q.SB'+POSSUMSB+'.contcube.total.fits'
-		u_filename = directory + 'fullfields/image.restored.u.SB'+POSSUMSB+'.contcube.total.fits'
+		i_filename = '/Volumes/NARNIA/leakage_corrected/image.restored.i.SB'+POSSUMSB+'.contcube.linmos.13arcsec.leakage.zernike.holoI.fits'
+		q_filename = '/Volumes/NARNIA/leakage_corrected/image.restored.q.SB'+POSSUMSB+'.contcube.linmos.13arcsec.leakage.zernike.holoI.fits'
+		u_filename = '/Volumes/NARNIA/leakage_corrected/image.restored.u.SB'+POSSUMSB+'.contcube.linmos.13arcsec.leakage.zernike.holoI.fits'
 
 		imsubimage(imagename=i_filename,outfile='i_im_temp',region=region,overwrite=True,dropdeg=True)
 		imsubimage(imagename=q_filename,outfile='q_im_temp',region=region,overwrite=True,dropdeg=True)
@@ -74,7 +77,7 @@ for i in range(0,sources.shape[0]):
 			exportfits(imagename='EMU_cont_im_temp',fitsimage=emu_outfile,overwrite=True)
 		else:
 			#no cubes 
-			emu_filename= directory +'fullfields/image.i.SB'+EMUSB+'.cont.taylor.0.restored.fits'
+			emu_filename= directoryA +'fullfields/image.i.SB'+EMUSB+'.cont.taylor.0.restored.fits'
 			imsubimage(imagename=emu_filename,outfile='emu_cont_temp',region=region,overwrite=True,dropdeg=True)
 			exportfits(imagename='emu_cont_temp',fitsimage=emu_outfile,overwrite=True)
 			os.system("rm -r emu_cont_temp")

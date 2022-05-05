@@ -1,6 +1,12 @@
 #(1) Survey	(2) Pixel size (arcsec)
-WISE_3.4	1.375	
+WISE_3.4	1.375
+WISE_4.6	1.375
+WISE_12	1.375
+WISE_22	1.375
 DSS	1.7
+DSS2_Red	1
+DSS2_Blue	1
+DSS2_IR	1
 SUMSS_843_MHz	11
 2MASS-J	1
 NVSS	15

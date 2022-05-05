@@ -43,21 +43,20 @@ def fit(x,y,yerr):
 def peakfit(x,y):
     #find location of peak datapoint
     peak=np.nanmax(y)
-    peakloc=np.where(y==peak)[0]
+    peaklocarr=np.where(y==peak)#[0]
+    #peakloc2=np.nanargmax(y)
+    #print(peakloc,peakloc2)
+    peakloc=np.nanargmax(y)
 
-    if len(peakloc)>=2 or peakloc==0:
+    if len(peaklocarr)>=2 or peakloc<=2 :
         #something is wrong
         fitted_peak=np.nan
         fitted_peak_loc=np.nan   
     else: 
-    
-        if len(peakloc)==2:
-            #two adjacent points with same value, take the first
-            peakloc=peakloc[0]
 
         #get a selection of points either side of this (5 in total)
-        x_fit=x[int(peakloc-1):int(peakloc+2)]
-        y_fit=y[int(peakloc-1):int(peakloc+2)]
+        x_fit=x[int(peakloc-2):int(peakloc+1)]
+        y_fit=y[int(peakloc-2):int(peakloc+1)]
         
         #do a quadratic fit
         peakfit=np.polyfit(x_fit,y_fit,2)
@@ -136,8 +135,8 @@ def burnkfit(lamdasq,polfrac_cube,polfrac_cube_errs,mask):
 
                     #fit a straight line 
                     p,pError,redchisqrd = fit(x,y,yerr)
-                    k=-1*p[1]
-                    p0=np.exp(p[0])
+                    k=-1*p[0]
+                    p0=np.exp(p[1])
                 
                     k_arr[j,i]=k
                     p0_arr[j,i]=p0
@@ -177,36 +176,45 @@ def add_colorbar(im, aspect=40, pad_fraction=0.5, **kwargs):
     return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
 
-def fdf_fit(pkrm_im,fdfdata,fdf_real,fdf_im,rmarray,cont_im,rmthresh=1000,contthresh=0):
+def fdf_fit(pkrm_im,fdfdata,fdf_real,fdf_im,rmarray,rmthresh=1000):
     #fit the peak RM of a FDF
     rmsf_rm_fit=np.nan*np.ones(shape=pkrm_im.shape)
     rmsf_chi0_fit=np.nan*np.ones(shape=pkrm_im.shape)
+    pkPI_fit=np.nan*np.ones(shape=pkrm_im.shape)
     shape=pkrm_im.shape[1]
-    print(shape)
+    rm_res=np.abs(rmarray[1]-rmarray[0])
     for i in range (0,shape):
         print(i,shape)
         for j in range (0,pkrm_im.shape[0]):
-            if np.abs(pkrm_im[j,i])<=rmthresh and cont_im[j,i]>=contthresh:
-                total_peak,total_peak_amp=peakfit(rmarray,fdfdata[:,j,i])
-                p_real=quadfit(rmarray,fdf_real[:,j,i],total_peak)
-                p_im=quadfit(rmarray,fdf_im[:,j,i],total_peak)
-                q_amp=np.multiply(np.square(total_peak),p_real[0]) + np.multiply(total_peak,p_real[1]) + p_real[2]
-                u_amp=np.multiply(np.square(total_peak),p_im[0]) + np.multiply(total_peak,p_im[1]) + p_im[2]
-                chi_0_rmsf=0.5*np.arctan2(u_amp,q_amp)
-                if np.isfinite(total_peak):
-                    rmsf_rm_fit[j,i]=total_peak
-                    rmsf_chi0_fit[j,i]=chi_0_rmsf
+            if np.abs(pkrm_im[j,i])<=rmthresh and np.isfinite(pkrm_im[j,i]):
+                try:
+                    total_peak,total_peak_amp=peakfit(rmarray,fdfdata[:,j,i])
+                    if np.abs(total_peak-pkrm_im[j,i])>rm_res:
+                        print("uh oh peak fit went wrong")
+                    p_real=quadfit(rmarray,fdf_real[:,j,i],total_peak)
+                    p_im=quadfit(rmarray,fdf_im[:,j,i],total_peak)
+                    q_amp=np.multiply(np.square(total_peak),p_real[0]) + np.multiply(total_peak,p_real[1]) + p_real[2]
+                    u_amp=np.multiply(np.square(total_peak),p_im[0]) + np.multiply(total_peak,p_im[1]) + p_im[2]
+                    chi_0_rmsf=0.5*np.arctan2(u_amp,q_amp)
+                    if np.isfinite(total_peak):
+                        rmsf_rm_fit[j,i]=total_peak
+                        rmsf_chi0_fit[j,i]=chi_0_rmsf
+                        pkPI_fit[j,i]=total_peak_amp
+                except:
+                    rmsf_rm_fit[j,i]=np.nan
+                    rmsf_chi0_fit[j,i]=np.nan
+                    pkPI_fit[j,i]=np.nan          
 
-    return(rmsf_rm_fit,rmsf_chi0_fit)
+    return(rmsf_rm_fit,rmsf_chi0_fit,pkPI_fit)
 
-def fdf_fit_gauss(pkrm_im,fdfdata,fdf_real,fdf_im,rmarray,cont_im,rmthresh=1000,contthresh=0):
+def fdf_fit_gauss(pkrm_im,fdfdata,fdf_real,fdf_im,rmarray,rmthresh=1000):
     #fit the peak RM of a FDF
     rmsf_rm_fit_width=np.nan*np.ones(shape=pkrm_im.shape)
     shape=pkrm_im.shape[1]
     print(shape)
     for i in range (0,shape):
         for j in range (0,pkrm_im.shape[0]):
-            if np.abs(pkrm_im[j,i])<=rmthresh and cont_im[j,i]>=contthresh:
+            if np.abs(pkrm_im[j,i])<=rmthresh and np.isfinite(pkrm_im[j,i]):
                 try:
                     H, A, x0, sigma=gaussfit(rmarray,fdfdata[:,j,i])
                 except:
@@ -265,5 +273,37 @@ def galactic_rm(coords,filename,errfilename):
     RMerr=faradayuncertainty[y,x]
 
     return(RM,RMerr)
+
+def specind(freqs,icube,icubeerrs,mask):
+    h_dims=int(icube.shape[2])
+    v_dims=int(icube.shape[1])
+    alpha_arr=np.nan*np.ones(shape=mask.shape)
+    redchi_array=np.nan*np.ones(shape=mask.shape)
+    x=np.square(freqs)
+
+    for i in range(0,h_dims):
+        for j in range(0,v_dims):
+            #check that it's not a masked pixel
+            if mask[j,i]==0:
+                try:
+                    i_slice=icube[:,j,i]
+                    i_errs_slice=icubeerrs[:,j,i]
+
+                    i_errs_slice=np.where(i_slice<0,np.nan,i_errs_slice)
+                    i_slice=np.where(i_slice<0,np.nan,i_slice)
+
+                    y=np.log(i_errs_slice)
+                    x=np.log(freqs)
+                    yerr=np.divide(i_errs_slice,i_errs_slice)
+
+                    #fit a straight line 
+                    p,pError,redchisqrd = fit(x,y,yerr)
+                    alpha=p[0]
+                    alpha_arr[j,i]=alpha
+                    redchi_array[j,i]=redchisqrd
+                except:
+                    print("uh oh")
+    print("hello")
+    return alpha_arr,redchi_array
 
 
